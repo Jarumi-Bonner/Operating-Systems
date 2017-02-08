@@ -1,3 +1,14 @@
+/* 
+	add array to store names
+	check variable name before store data 
+	processes can overrun 
+
+*/
+
+
+
+
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -5,7 +16,7 @@
 
 
 // Toggle this variable if you want to print all parsed data
-#define FLAG 0
+#define FLAG 1
 
 /*Function prototypes*/
 int* parseProcessInfo(FILE *file);
@@ -16,17 +27,19 @@ int main (void){
 
 	/*Declare Variables */
 	FILE *file;
-	int x, y, z;
+	int i, x, y, z;
+	int timer = 0;
+	int currentprocess = 0;
 
 	/* Open file for processing data */
-	file = fopen ("set2_process.in", "r");
+	file = fopen ("set1_process.in", "r");
 
 	//Contains all data related to the scheduler
 	int* processVariables = parseProcessInfo(file);
 
 	//Prints data for troubleshooting
 	if(FLAG){
-		for(x = 0; x <4; x++){
+		for(x = 0; x < 4; x++){
 			printf("%d\n", processVariables[x]);
 		}
 	}
@@ -38,7 +51,8 @@ int main (void){
 	//Prints data for troubleshooting
 	if(FLAG){
 		for(x = 0; x < processVariables[0]; x++){
-				printf("%d %d\n",processes[x][0], processes[x][1] );
+				printf("%d %d %d %d\n",processes[x][0], processes[x][1], 
+								processes[x][2], processes[x][3]);
 		}
 	}
 
@@ -46,6 +60,91 @@ int main (void){
 	fclose(file);
 
 	//* Insert code for scheduling methods*/
+	switch(processVariables[2]){
+
+
+		case 0: // First Come First Serve 
+		if (FLAG){
+			printf("Enter FCFS\n");
+		}
+
+		//find first process to arrive
+			for (i = processVariables[0]-1; i >= 1 ; i--){
+
+				if(processes[i][0] < processes[(i-1)][0])
+					currentprocess = i; 
+			}
+
+		//While loop to emulate the total runtime of the scheduler 
+		while(timer < processVariables[1]){
+			//Check if new process has arrived 
+
+			//if new process arrive alert scheduler 
+
+
+			//Check if old process finish 
+
+
+			//if old process finish find next process
+
+
+			//otherwise increase timer 
+			
+
+		
+
+
+
+
+
+
+
+
+
+
+
+
+
+		}
+		
+
+
+
+
+
+
+		case 1: // Shortest Job First
+
+
+
+
+
+
+
+
+		case 2: // Round Robin
+
+		break;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	}
+
 
 
 
@@ -111,13 +210,13 @@ int** parseProcesses(FILE *file, int numberOfProcesses){
 	int** processes;
 	/* Processes 2D array 
 	// 		(0)P1						  												
-	//   +-----------+	+-----------+	
-	//   | arrival	|	| burst		|	
-	//   +-----------+	+-----------+	
+	//   +-----------+	+-----------+	+----------------+	+-----------+
+	//   | arrival	|	| burst		|	|Remaining burst |	|	Wait	|
+	//   +-----------+	+-----------+	+----------------+	+-----------+
 	// 		(1)P2						  												
-	//   +-----------+	+-----------+	
-	//   | arrival	|	| burst		|	
-	//   +-----------+	+-----------+
+	//   +-----------+	+-----------+	+----------------+	+-----------+
+	//   | arrival	|	| burst		|	|Remaining burst |	|	Wait	|
+	//   +-----------+	+-----------+	+----------------+	+-----------+
 	//   etc...
 	*/
 	char garbage[25];
@@ -131,7 +230,7 @@ int** parseProcesses(FILE *file, int numberOfProcesses){
 
 	//declares following arrays to store individual data for each process
 	for(i = 0; i < numberOfProcesses; i++){
-		processes[i] = malloc(sizeof(int) * 3);
+		processes[i] = malloc(sizeof(int) * 4);
 
 	}
 
