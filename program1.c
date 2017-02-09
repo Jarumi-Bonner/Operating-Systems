@@ -1,7 +1,7 @@
-/* 
+/*
 	add array to store names
-	check variable name before store data 
-	processes can overrun 
+	check variable name before store data
+	processes can overrun
 
 */
 
@@ -22,17 +22,35 @@
 int* parseProcessInfo(FILE *file);
 int** parseProcesses(FILE *file, int numberOfProcesses);
 
+//Possible Struct for processes info and Queue
+/*
+struct processes{
+	int arrival;
+	int burst;
+	int burstR;
+	int wait;
+} tyepedef proc;
+*/
+/*
+struct Queue {
+
+	struct Queue *next;
+}tyepedef Queue;
+*/
 
 int main (void){
 
 	/*Declare Variables */
-	FILE *file;
+	FILE *file, *out;
 	int i, x, y, z;
 	int timer = 0;
 	int currentprocess = 0;
 
 	/* Open file for processing data */
 	file = fopen ("set1_process.in", "r");
+
+	/*Opens file we will write out to */
+	out = fopen("process.out", "w+");
 
 	//Contains all data related to the scheduler
 	int* processVariables = parseProcessInfo(file);
@@ -43,15 +61,15 @@ int main (void){
 			printf("%d\n", processVariables[x]);
 		}
 	}
-	
-	/* Contains all data related to each process in 2D array. 
+
+	/* Contains all data related to each process in 2D array.
 	Passes File and number of processes*/
 	int** processes = parseProcesses(file, processVariables[0]);
 
 	//Prints data for troubleshooting
 	if(FLAG){
 		for(x = 0; x < processVariables[0]; x++){
-				printf("%d %d %d %d\n",processes[x][0], processes[x][1], 
+				printf("%d %d %d %d\n",processes[x][0], processes[x][1],
 								processes[x][2], processes[x][3]);
 		}
 	}
@@ -63,7 +81,7 @@ int main (void){
 	switch(processVariables[2]){
 
 
-		case 0: // First Come First Serve 
+		case 0: // First Come First Serve
 		if (FLAG){
 			printf("Enter FCFS\n");
 		}
@@ -72,26 +90,26 @@ int main (void){
 			for (i = processVariables[0]-1; i >= 1 ; i--){
 
 				if(processes[i][0] < processes[(i-1)][0])
-					currentprocess = i; 
+					currentprocess = i;
 			}
 
-		//While loop to emulate the total runtime of the scheduler 
+		//While loop to emulate the total runtime of the scheduler
 		while(timer < processVariables[1]){
-			//Check if new process has arrived 
+			//Check if new process has arrived
 
-			//if new process arrive alert scheduler 
+			//if new process arrive alert scheduler
 
 
-			//Check if old process finish 
+			//Check if old process finish
 
 
 			//if old process finish find next process
 
 
-			//otherwise increase timer 
-			
+			//otherwise increase timer
 
-		
+
+
 
 
 
@@ -106,7 +124,7 @@ int main (void){
 
 
 		}
-		
+
 
 
 
@@ -123,6 +141,8 @@ int main (void){
 
 
 		case 2: // Round Robin
+		// rr(out,processVariables);
+		// Call Function to Round-Robin
 
 		break;
 
@@ -150,7 +170,7 @@ int main (void){
 
 
 
-	
+
 
 	return 0;
 }
@@ -159,19 +179,19 @@ int main (void){
 int* parseProcessInfo(FILE *file){
 
 	int* processVariables;
-	/* Process Variables array 
-	// 0				1  				2				3				
+	/* Process Variables array
+	// 0				1  				2				3
 	// +-------------+  +-----------+	+-----------+	+---------------+
 	// | ProcessCount|  | runTime	|	| Method	|	|QuantumTime	|
 	// +-------------+  +-----------+	+-----------+	+---------------+
 	*/
 	int i= 0;
-	int j = 0; 
+	int j = 0;
 	char line[100];
 	char garbage[25];
 	char temp[5];
 	/* method[] Array to digitilize process method
-		fcfs = 0 
+		fcfs = 0
 		sjf = 1
 		rr = 2
 	*/
@@ -186,7 +206,7 @@ int* parseProcessInfo(FILE *file){
 
 		fgets(line, sizeof line, file);
 
-		/* store variable names to garbage, store respective valuable data to corresponding postion in processVariables[] 
+		/* store variable names to garbage, store respective valuable data to corresponding postion in processVariables[]
 		else condition handles string comparison to assignment process method as a digit*/
 		if(i < 4 && i != 2){
 			sscanf(line, "%s %d", garbage, &processVariables[i++]);
@@ -197,9 +217,9 @@ int* parseProcessInfo(FILE *file){
 	   	for(j = 0 ; j < 3 ; j++ ){
 	   		if(!strcmp(temp,method[j])){
             	processVariables[i++] = j;
-        	}//ends if statement 
+        	}//ends if statement
         }//end for loop
-	   }//end else statement 
+	   }//end else statement
 	}//ends while loop
 
 	return processVariables;
@@ -208,12 +228,12 @@ int* parseProcessInfo(FILE *file){
 
 int** parseProcesses(FILE *file, int numberOfProcesses){
 	int** processes;
-	/* Processes 2D array 
-	// 		(0)P1						  												
+	/* Processes 2D array
+	// 		(0)P1
 	//   +-----------+	+-----------+	+----------------+	+-----------+
 	//   | arrival	|	| burst		|	|Remaining burst |	|	Wait	|
 	//   +-----------+	+-----------+	+----------------+	+-----------+
-	// 		(1)P2						  												
+	// 		(1)P2
 	//   +-----------+	+-----------+	+----------------+	+-----------+
 	//   | arrival	|	| burst		|	|Remaining burst |	|	Wait	|
 	//   +-----------+	+-----------+	+----------------+	+-----------+
@@ -225,7 +245,7 @@ int** parseProcesses(FILE *file, int numberOfProcesses){
 	int i = 0;
 	int k = 0;
 
-	//declaring array of int pointer to store each process 
+	//declaring array of int pointer to store each process
 	processes = malloc(sizeof(int*) * numberOfProcesses);
 
 	//declares following arrays to store individual data for each process
@@ -234,14 +254,22 @@ int** parseProcesses(FILE *file, int numberOfProcesses){
 
 	}
 
-	//Scans rest of file, stores useless variables to garbage and stores data to each process 
+	//Scans rest of file, stores useless variables to garbage and stores data to each process
 	while(fgets(line, sizeof line, file) ) {
 			if(!(strcmp(line, "end\n") == 0)){
 				sscanf(line, "%s %s %s %s %d %s %d", garbage, garbage, garbage, garbage, &processes[j][0], garbage, &processes[j][1]);
 				j++;
-			}	
+			}
 	}
 
 	return processes;
 
+}
+
+
+//Implentation of Round-Robin
+void rr(FILE* out, int* processVariables/*, insert 2d array or struct*/){
+
+	fprintf(out, "%d proccess\n Using Round-Robin\n Quantum %d", processVariables[0], processVariables[3]);
+	return;
 }
