@@ -8,6 +8,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <stdbool.h>
 
 
 // Toggle this variable if you want to print all parsed data
@@ -27,7 +28,7 @@ typedef struct processInfo ProcessInfo;
 /*Function prototypes*/
 int* parseProcessInfo(FILE *file);
 ProcessInfo* getProcessInfo(FILE *file, int numberOfProcesses);
-void shortestJobFirst(int* processVariables, ProcessInfo* allProcesses);
+void shortestJobFirst(FILE* out, int* processVariables, ProcessInfo* allProcesses);
 void rr(FILE *out, int* processVariables);
 
 //Possible Struct for processes info and Queue
@@ -52,7 +53,7 @@ int main (void){
 	int i, x, y, z;
 
 	/* Open file for processing data */
-	file = fopen ("set3_process.in", "r");
+	file = fopen ("set4_process.in", "r");
 	out = fopen("process.out", "w+");
 
 	//Contains all data related to the scheduler
@@ -74,7 +75,7 @@ int main (void){
 	//Prints data for troubleshooting
 	if(FLAG){
 		for (i = 0 ; i < processCount ; i++){
-			printf("%s %d %d\n", allProcesses[i].pName , allProcesses[i].pArrivalTime, allProcesses[i].pBurst );
+			printf("%s %d %d %d\n", allProcesses[i].pName , allProcesses[i].pArrivalTime, allProcesses[i].pBurst,allProcesses[i].pWaitTime);
 		}
 	}
 
@@ -91,7 +92,7 @@ int main (void){
 
 
 		case 1: // Shortest Job First
-            shortestJobFirst(processVariables, allProcesses);
+            shortestJobFirst(out, processVariables, allProcesses);
             break;
 
 		case 2: // Round Robin
@@ -101,7 +102,9 @@ int main (void){
 		break;
 
 	}
-
+    fclose(out);
+    // Ayee! Free Kodak
+    free(allProcesses);
 	return 0;
 
 }
@@ -125,6 +128,7 @@ ProcessInfo* getProcessInfo(FILE *file, int numberOfProcesses)
 				sscanf(line, "%s %s %s %s %d %s %d", garbage, garbage, temp[i].pName, garbage, &arrivalTime, garbage, &burst);
 				temp[i].pArrivalTime = arrivalTime;
 				temp[i].pBurst = burst;
+				temp[i].pWaitTime = 0;
 				i++;
 			}
 	}
@@ -199,8 +203,94 @@ void rr(FILE* out, int* processVariables/*, insert 2d array or struct*/){
 	return;
 }
 
-void shortestJobFirst(int* processVariables, ProcessInfo* allProcesses)
+void shortestJobFirst(FILE* out, int* processVariables, ProcessInfo* allProcesses)
 {
+    int timeLimit = processVariables[1];
+    int currentBurst = 999, nextProcessToRun = -1;
+    int finishedCount =0, time, i;
+    processCount = processVariables[0];
+    currentprocess = -1;
+    bool isFinished[processCount];
 
+    fprintf(out, "%d processes \nUsing Shortest Job First (Pre) \n\n", processCount);
+
+    for (time = 0; time <= timeLimit; time++)
+    {
+        printf("Time is %d\n", time);
+
+        // If there's a process currently running
+        if(currentprocess >= 0)
+        {
+            // decrease the burst
+            allProcesses[currentprocess].pBurst--;
+            // Process just finished
+            if(allProcesses[currentprocess].pBurst == 0)
+            {
+                fprintf(out, "Time %d: %s Finished\n", time, allProcesses[currentprocess].pName);
+                isFinished[currentprocess] = true;
+                currentprocess = -1;
+                currentBurst = 999;
+                finishedCount++;
+            }
+        }
+
+        for(i = 0; i < processCount; i++)
+        {
+            // New process arrived
+            if(allProcesses[i].pArrivalTime == time)
+            {
+                fprintf(out, "Time %d: %s arrived\n", time, allProcesses[i].pName);
+                if(allProcesses[i].pBurst < currentBurst)
+                {
+                    currentBurst = allProcesses[i].pBurst;
+                    nextProcessToRun = i;
+                }
+            }
+            if(currentprocess < 0)
+            {
+                if(time > allProcesses[i].pArrivalTime && !isFinished[i])
+                {
+                    if(allProcesses[i].pBurst < currentBurst)
+                    {
+                        currentBurst = allProcesses[i].pBurst;
+                        nextProcessToRun = i;
+                    }
+                }
+            }
+			/* Wrong logic for wait time *Reminder*
+			else
+			{
+				if(currentprocess != i && time > allProcesses[i].pArrivalTime)
+				{
+					allProcesses[i].pWaitTime++; 
+				}
+			}
+			*/
+        }
+        if (nextProcessToRun >=0 && nextProcessToRun != currentprocess && !isFinished[nextProcessToRun])
+        {
+            currentprocess = nextProcessToRun;
+            fprintf(out, "Time %d: %s selected (burst %d)\n", time, allProcesses[currentprocess].pName, allProcesses[currentprocess].pBurst);
+        }
+        // If there's no process currently running
+        if(currentprocess < 0)
+        {
+            fprintf(out, "Timer %d: IDLE\n", time);
+        }
+    }
+    if(finishedCount == processCount)
+    {
+
+        fprintf(out, "Finished at time %d\n\n", timeLimit);
+		for(i = 0; i < processCount; i++)
+		{
+			fprintf(out, "%s wait %d turnaround \n", allProcesses[i].pName, allProcesses[i].pWaitTime);
+		}
+     
+    }
+    else
+    {
+        fprintf(out, "Px did not finish");
+    }
 
 }
