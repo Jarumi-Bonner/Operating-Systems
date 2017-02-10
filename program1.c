@@ -1,7 +1,7 @@
 /* -------Bugs----------
  - Check to make sure variables names are correct before storing data
  - Make sure parser does not break when Quantum time is commented out for non RR
- - Processes can overrun so gracefully inform user 
+ - Processes can overrun so gracefully inform user
 */
 
 #include <stdio.h>
@@ -41,8 +41,8 @@ struct Queue {
 
 /* Gobal Variables*/
 
-int timer = 0, 
-currentprocess = -1, 
+int timer = 0,
+currentprocess = -1,
 processCount;
 
 int main (void){
@@ -70,7 +70,7 @@ int main (void){
 
 	// Call method to read the rest the file and get the processes info
 	allProcesses = getProcessInfo(file, processCount);
-	
+
 	//Prints data for troubleshooting
 	if(FLAG){
 		for (i = 0 ; i < processCount ; i++){
@@ -168,7 +168,7 @@ int* parseProcessInfo(FILE *file){
 			sscanf(line, "%s %d", garbage, &processVariables[i]);
 	  	}//ends if statement
 
-	   if (i == 2){	
+	   if (i == 2){
 	  	sscanf(line, "%s %s", garbage, temp);
 	  	//compares strings to method array and assigns correct number
 		  	for(j = 0 ; j < 3 ; j++ ){
