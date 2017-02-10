@@ -29,7 +29,7 @@ typedef struct processInfo ProcessInfo;
 int* parseProcessInfo(FILE *file);
 ProcessInfo* getProcessInfo(FILE *file, int numberOfProcesses);
 void shortestJobFirst(FILE* out, int* processVariables, ProcessInfo* allProcesses);
-void rr(FILE *out, int* processVariables);
+void rr(FILE* out, int* processVariables, ProcessInfo* allProcesses);
 
 //Possible Struct for processes info and Queue
 
@@ -96,7 +96,8 @@ int main (void){
             break;
 
 		case 2: // Round Robin
-		// rr(out,processVariables);
+		        rr(out,processVariables, allProcesses);
+            break;
 		// Call Function to Round-Robin
 
 		break;
@@ -139,7 +140,7 @@ int* parseProcessInfo(FILE *file){
 
 	int* processVariables;
 	/* Process Variables array
-	// 0				1  				2				3
+	// 0			            	1  			     	2			       	3
 	// +-------------+  +-----------+	+-----------+	+---------------+
 	// | ProcessCount|  | runTime	|	| Method	|	|QuantumTime	|
 	// +-------------+  +-----------+	+-----------+	+---------------+
@@ -197,12 +198,45 @@ int* parseProcessInfo(FILE *file){
 
 
 //Implentation of Round-Robin
-void rr(FILE* out, int* processVariables/*, insert 2d array or struct*/){
+void rr(FILE* out, int* processVariables, ProcessInfo* allProcesses){
 
-	fprintf(out, "%d proccess\n Using Round-Robin\n Quantum %d", processVariables[0], processVariables[3]);
+  int timeLimit = processVariables[1], time, i;
+  int numberOfProcesses = processVariables[0];
+  int quantum = processVariables[3];
+  int currentprocess = -1, currentBurst= 0;
+  bool isFinished[numberOfProcesses];
+  int finishedCount =0;
+	fprintf(out, "%d proccess\n Using Round-Robin\n Quantum %d\n\n", processVariables[0], processVariables[3]);
+
+  for (time = 0; time < timeLimit; time++){
+    printf("Time is %d\n", time);
+
+    for(i = 0; i<numberOfProcesses; i++){
+      if(allProcesses[i].pArrivalTime == time){
+        fprintf(out, "Time %d: %s arrived\n", time, allProcesses[i].pName);
+        currentBurst = allProcesses[i].pBurst;
+        if(currentBurst > quantum)
+          currentBurst = currentBurst - quantum;
+      }
+    }
+    // If there's no process currently running
+    if(currentprocess < 0){
+        fprintf(out, "Timer %d: IDLE\n", time);
+    }
+  }
+  if(finishedCount == processCount){
+    fprintf(out, "Finished at time %d\n\n", timeLimit);
+    for(i = 0; i < processCount; i++){
+      fprintf(out, "%s wait %d turnaround \n", allProcesses[i].pName, allProcesses[i].pWaitTime);
+    }
+  }else{
+    fprintf(out, "Px did not finish");
+  }
+  //
 	return;
 }
 
+/*Begin Shortest Job First Algorithm */
 void shortestJobFirst(FILE* out, int* processVariables, ProcessInfo* allProcesses)
 {
     int timeLimit = processVariables[1];
@@ -262,7 +296,7 @@ void shortestJobFirst(FILE* out, int* processVariables, ProcessInfo* allProcesse
 			{
 				if(currentprocess != i && time > allProcesses[i].pArrivalTime)
 				{
-					allProcesses[i].pWaitTime++; 
+					allProcesses[i].pWaitTime++;
 				}
 			}
 			*/
@@ -286,11 +320,19 @@ void shortestJobFirst(FILE* out, int* processVariables, ProcessInfo* allProcesse
 		{
 			fprintf(out, "%s wait %d turnaround \n", allProcesses[i].pName, allProcesses[i].pWaitTime);
 		}
-     
+
     }
     else
     {
         fprintf(out, "Px did not finish");
     }
 
+}
+
+
+cmpA(const void * a, const void *b){
+  ProcessInfo * processA = (ProcessInfo *)a;
+  ProcessInfo * processB = (ProcessInfo *)b;
+
+  return  (processA->pArrivalTime  - processB->pArrivalTime);
 }
