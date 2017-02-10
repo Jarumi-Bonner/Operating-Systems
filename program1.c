@@ -24,7 +24,6 @@ struct processInfo{
 
 typedef struct processInfo ProcessInfo;
 
-
 /*Function prototypes*/
 int* parseProcessInfo(FILE *file);
 ProcessInfo* getProcessInfo(FILE *file, int numberOfProcesses);
@@ -79,9 +78,6 @@ int main (void){
 		}
 	}
 
-	
-	
-
 	/* Closes file*/
 	fclose(file);
 
@@ -90,6 +86,7 @@ int main (void){
 
 
 		case 0: // First Come First Serve
+			//firstComeFirstServe();
 			break;
 
 
