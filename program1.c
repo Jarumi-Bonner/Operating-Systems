@@ -52,7 +52,7 @@ int main (void){
 	int i, x, y, z;
 
 	/* Open file for processing data */
-	file = fopen ("set2_process.in", "r");
+	file = fopen ("set3_process.in", "r");
 	out = fopen("process.out", "w+");
 
 	//Contains all data related to the scheduler
@@ -145,6 +145,7 @@ int* parseProcessInfo(FILE *file){
 	char line[100];
 	char garbage[25];
 	char temp[5];
+	char tempChar;
 	/* method[] Array to digitilize process method
 		fcfs = 0
 		sjf = 1
@@ -163,18 +164,28 @@ int* parseProcessInfo(FILE *file){
 
 		/* store variable names to garbage, store respective valuable data to corresponding postion in processVariables[]
 		else condition handles string comparison to assignment process method as a digit*/
-		if(i < 4 && i != 2){
-			sscanf(line, "%s %d", garbage, &processVariables[i++]);
+		if(i != 2 && i != 3){
+			sscanf(line, "%s %d", garbage, &processVariables[i]);
 	  	}//ends if statement
-	  else{
+
+	   if (i == 2){	
 	  	sscanf(line, "%s %s", garbage, temp);
 	  	//compares strings to method array and assigns correct number
-	  	for(j = 0 ; j < 3 ; j++ ){
-	  		if(!strcmp(temp,method[j])){
-            	processVariables[i++] = j;
-        	}//ends if statement
-        }//end for loop
-	  }//end else statement
+		  	for(j = 0 ; j < 3 ; j++ ){
+		  		if(!strcmp(temp,method[j])){
+	            	processVariables[i] = j;
+	        	}//ends if statement
+	        }//end for loop
+	  	}//end if statement
+
+	  	if(i == 3 && processVariables[2] == 2 ){
+	  		sscanf(line, "%s %d", garbage, &processVariables[3]);
+	  	}//end if statement
+	  	else
+	  		processVariables[3] = 0;
+
+	  	i++;
+
 	}//ends while loop
 
 	return processVariables;
