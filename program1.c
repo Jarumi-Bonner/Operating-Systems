@@ -6,9 +6,6 @@
 */
 
 
-
-
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -18,19 +15,27 @@
 // Toggle this variable if you want to print all parsed data
 #define FLAG 1
 
+// Define struct to hold each process
+struct processInfo{
+
+    char* pName;
+	int pArrivalTime;
+	int pBurst;
+	int pWaitTime;
+};
+
+typedef struct processInfo ProcessInfo;
+
+
 /*Function prototypes*/
 int* parseProcessInfo(FILE *file);
 int** parseProcesses(FILE *file, int numberOfProcesses);
+ProcessInfo* getProcessInfo(FILE *file, int numberOfProcesses);
+void shortestJobFirst(int* processVariables, ProcessInfo* allProcesses);
+void rr(FILE *out, int* processVariables);
 
 //Possible Struct for processes info and Queue
-/*
-struct processes{
-	int arrival;
-	int burst;
-	int burstR;
-	int wait;
-} tyepedef proc;
-*/
+
 /*
 struct Queue {
 
@@ -38,37 +43,45 @@ struct Queue {
 }tyepedef Queue;
 */
 
+int timer =0, currentprocess = -1, processCount;
 int main (void){
 
 	/*Declare Variables */
 	FILE *file, *out;
 	int i, x, y, z;
-	int timer = 0;
-	int currentprocess = 0;
+	// Made these variable global cause they'll be used throughout the program
+	//int timer = 0;
+	//int currentprocess = 0;
 
 	/* Open file for processing data */
 	file = fopen ("set1_process.in", "r");
 
-	/*Opens file we will write out to */
 	out = fopen("process.out", "w+");
-
 	//Contains all data related to the scheduler
 	int* processVariables = parseProcessInfo(file);
+	processCount = processVariables[0];
 
+	// declare array to contain each process and its properties
+	ProcessInfo* allProcesses = malloc(processCount *sizeof(ProcessInfo));
+	// Call method to read the rest the file and get the processes info
+	allProcesses = getProcessInfo(file, processCount);
 	//Prints data for troubleshooting
+
+	/*
 	if(FLAG){
 		for(x = 0; x < 4; x++){
-			printf("%d\n", processVariables[x]);
+			printf("%d\n", processVariables[x]);`
 		}
 	}
+	*/
 
 	/* Contains all data related to each process in 2D array.
 	Passes File and number of processes*/
-	int** processes = parseProcesses(file, processVariables[0]);
+	int** processes = parseProcesses(file, processCount);
 
 	//Prints data for troubleshooting
 	if(FLAG){
-		for(x = 0; x < processVariables[0]; x++){
+		for(x = 0; x < processCount; x++){
 				printf("%d %d %d %d\n",processes[x][0], processes[x][1],
 								processes[x][2], processes[x][3]);
 		}
@@ -87,7 +100,7 @@ int main (void){
 		}
 
 		//find first process to arrive
-			for (i = processVariables[0]-1; i >= 1 ; i--){
+			for (i = processCount -1; i >= 1 ; i--){
 
 				if(processes[i][0] < processes[(i-1)][0])
 					currentprocess = i;
@@ -118,27 +131,12 @@ int main (void){
 
 
 
-
-
-
-
-
 		}
 
 
-
-
-
-
-
 		case 1: // Shortest Job First
-
-
-
-
-
-
-
+            shortestJobFirst(processVariables, allProcesses);
+            break;
 
 		case 2: // Round Robin
 		// rr(out,processVariables);
@@ -146,36 +144,37 @@ int main (void){
 
 		break;
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 	}
-
-
-
-
-
-
-
 
 	return 0;
 }
+// Read through the rest of the file and return an array that contains
+// each process's properties
+ProcessInfo* getProcessInfo(FILE *file, int numberOfProcesses)
+{
+    ProcessInfo* temp;
+    char garbage[25];
+    char line[100];
+    char pName[20];
+    int i = 0;
+    int arrivalTime;
+    int burst;
 
+    // declare temp array
+    temp = (ProcessInfo*)malloc(numberOfProcesses * sizeof(ProcessInfo));
 
+    while(fgets(line, sizeof line, file) && i <= numberOfProcesses ) {
+			if(!(strcmp(line, "end\n") == 0)){
+				sscanf(line, "%s %s %s %s %d %s %d", garbage, garbage, pName, garbage, arrivalTime, garbage, burst);
+				temp[i].pName = (char*)malloc(sizeof(char*));
+				temp[i].pArrivalTime = arrivalTime;
+				temp[i].pBurst = burst;
+				i++;
+			}
+	}
+
+	return temp;
+}
 int* parseProcessInfo(FILE *file){
 
 	int* processVariables;
@@ -239,6 +238,7 @@ int** parseProcesses(FILE *file, int numberOfProcesses){
 	//   +-----------+	+-----------+	+----------------+	+-----------+
 	//   etc...
 	*/
+
 	char garbage[25];
 	char line[100];
 	int j = 0;
@@ -257,7 +257,7 @@ int** parseProcesses(FILE *file, int numberOfProcesses){
 	//Scans rest of file, stores useless variables to garbage and stores data to each process
 	while(fgets(line, sizeof line, file) ) {
 			if(!(strcmp(line, "end\n") == 0)){
-				sscanf(line, "%s %s %s %s %d %s %d", garbage, garbage, garbage, garbage, &processes[j][0], garbage, &processes[j][1]);
+				sscanf(line, "%s %s %s %s %d %s %d", garbage, garbage, garbage, garbage, processes[i][0], garbage, processes[i][1]);
 				j++;
 			}
 	}
@@ -272,4 +272,10 @@ void rr(FILE* out, int* processVariables/*, insert 2d array or struct*/){
 
 	fprintf(out, "%d proccess\n Using Round-Robin\n Quantum %d", processVariables[0], processVariables[3]);
 	return;
+}
+
+void shortestJobFirst(int* processVariables, ProcessInfo* allProcesses)
+{
+
+
 }
