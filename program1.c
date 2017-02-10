@@ -29,6 +29,7 @@ int* parseProcessInfo(FILE *file);
 ProcessInfo* getProcessInfo(FILE *file, int numberOfProcesses);
 void shortestJobFirst(int* processVariables, ProcessInfo* allProcesses);
 void rr(FILE *out, int* processVariables);
+void firstComeFirstServe(FILE *out ,int* processVariables, ProcessInfo* allProcesses );
 
 //Possible Struct for processes info and Queue
 
@@ -52,7 +53,7 @@ int main (void){
 	int i, x, y, z;
 
 	/* Open file for processing data */
-	file = fopen ("set3_process.in", "r");
+	file = fopen ("set1_process.in", "r");
 	out = fopen("process.out", "w+");
 
 	//Contains all data related to the scheduler
@@ -86,7 +87,7 @@ int main (void){
 
 
 		case 0: // First Come First Serve
-			//firstComeFirstServe();
+			firstComeFirstServe(out,processVariables, allProcesses);
 			break;
 
 
@@ -203,4 +204,59 @@ void shortestJobFirst(int* processVariables, ProcessInfo* allProcesses)
 {
 
 
+}
+
+void firstComeFirstServe(FILE *out ,int* processVariables){
+	if (FLAG){
+		printf("Enter FCFS\n");
+	}
+
+	//Print schedule method
+	printf("Using First Come First Serve\n\n\n");
+
+	//Sort Processes by order of arrival 
+		
+
+	// print arrival of first process
+		printf("Time %d: %s arrived\n", timer, allProcesses );
+		printf("Time %d: %s selected (burst %d)\n", timer, "TempStringName", processes[currentprocess][1] );
+
+	//While loop to emulate the total runtime of the scheduler 
+	while(timer < processVariables[1]){
+		//Check if new process has arrived 
+		for (i = processVariables[0]-1; i >= 1 ; i--){
+			if(processes[i][0] == timer)
+				printf("Time %d: %s arrived\n", timer,"TempStringName" );
+				
+		}
+
+		//Current Process has finished
+		if(processes[currentprocess][2] == processes[currentprocess][1]){
+			finish = 1;
+			printf("Time %d: %s finished \n", timer, "TempStringName" );
+			complete++;
+		}
+
+		//if old process has finish find next process 
+		if (finish){
+			for (i = processVariables[0]-1; i >= 1 ; i--){
+				if(processes[currentprocess][0] < processes[(i-1)][0]){
+					currentprocess = i-1; 
+					printf("Time %d: %s selected (burst %d)\n", timer, "TempStringName",processes[currentprocess][1] );
+				}
+			}
+		}
+
+		//otherwise increase timer 
+		timer++;
+		processes[currentprocess][2]++;
+		
+		
+
+	}//ends while loop
+
+	printf("Finished at time %d\n", timer);
+
+
+	return;
 }
