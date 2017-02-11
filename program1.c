@@ -44,7 +44,7 @@ int main (void){
 	int i, x, y, z;
 
 	/* Open and close file for processing data */
-	file = fopen ("set1_process.in", "r");
+	file = fopen ("set7_process.in", "r");
 	out = fopen("process.out", "w+");
 
 	//Contains all data related to the scheduler
@@ -435,18 +435,18 @@ void firstComeFirstServe(FILE *out ,int* processVariables, ProcessInfo* allProce
 
 	//Sort Processes by order of arrival
 	for (i = 0 ; i < processCount; i++){
-		processOrder[i] = allProcesses[i].pArrivalTime;
-	}
+		  processOrder[i] = allProcesses[i].pArrivalTime;
+	}//end for loop
 
-    for (i = 0; i < processCount; ++i){
-		  for (j = i + 1; j < processCount; ++j){
-			 if (processOrder[i] > processOrder[j]){
-  				swap =  processOrder[i];
-  				processOrder[i] = processOrder[j];
-  				processOrder[j] = swap;
-			   }
-    	}
-	 }
+  for (i = 0; i < processCount; ++i){
+	 for (j = i + 1; j < processCount; ++j){
+		  if (processOrder[i] > processOrder[j]){
+				swap =  processOrder[i];
+				processOrder[i] = processOrder[j];
+				processOrder[j] = swap;
+		   }//end if statement
+  	}//end for loop
+  }//end for loop
 
 	//While loop to emulate the total runtime of the scheduler
 	while(timer <= runTime){
@@ -457,6 +457,7 @@ void firstComeFirstServe(FILE *out ,int* processVariables, ProcessInfo* allProce
         if((allProcesses[i].pArrivalTime == processOrder[complete]) && allProcesses[i].pArrivalTime <=timer){
           currentprocess = i;
           allProcesses[i].pWaitTime = 0;
+          allProcesses[i].pBurstRemaining--;
           // Print arrival of first process
           fprintf(out,"Time %d: %s arrived\n", timer, allProcesses[currentprocess].pName );
           fprintf(out,"Time %d: %s selected (burst %d)\n", timer, allProcesses[currentprocess].pName, allProcesses[currentprocess].pBurst);
@@ -464,8 +465,13 @@ void firstComeFirstServe(FILE *out ,int* processVariables, ProcessInfo* allProce
           break;
         }
       }
-      timer++;
-    }
+      // If the first process has not arrive, notify idle cpu
+      if(currentprocess == -1){
+          fprintf(out, "Time %d: Idle \n", timer );
+        }
+
+        timer++;
+    }//ends while loop
 
 		//Check if new process has arrived
 		for (i = processCount-1; i >= 1 ; i--){
