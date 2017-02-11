@@ -44,7 +44,7 @@ int main (void){
 	int i, x, y, z;
 
 	/* Open file for processing data */
-	file = fopen ("set2_process.in", "r");
+	file = fopen ("process.in", "r");
 
 	/* Open and close file for processing data */
 	//file = fopen ("set7_process.in", "r");
