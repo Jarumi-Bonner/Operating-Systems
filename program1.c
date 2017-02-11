@@ -11,7 +11,7 @@
 
 
 // Toggle this variable if you want to print all parsed data
-#define FLAG 0
+#define FLAG 1
 
 // Define struct to hold each process
 struct processInfo{
@@ -57,7 +57,7 @@ int main (void){
 	int i, x, y, z;
 
 	/* Open file for processing data */
-	file = fopen ("set4_process.in", "r");
+	file = fopen ("set2_process.in", "r");
 	out = fopen("process.out", "w+");
 
 	//Contains all data related to the scheduler
@@ -224,7 +224,7 @@ int i, j;
 //Implentation of Round-Robin
 void rr(FILE* out, int* processVariables, ProcessInfo* allProcesses){
 
-  int timeLimit = processVariables[1], time, i;
+  int timeLimit = processVariables[1], time=0, i;
   int numberOfProcesses = processVariables[0];
   int quantum = processVariables[3];
   int currentprocess=0, currentBurst= 0;
@@ -232,10 +232,10 @@ void rr(FILE* out, int* processVariables, ProcessInfo* allProcesses){
   int finishedCount =0;
   int processOrder[numberOfProcesses];
   int complete = 0;
-  int idle = 1;
-  int pCounter;
+  int idle = 1, next=0;
+  int pCounter =0;
 
-	fprintf(out, "%d proccess\n Using Round-Robin\n Quantum %d\n\n", processVariables[0], processVariables[3]);
+	fprintf(out, "%d process\n Using Round-Robin\n Quantum %d\n\n", processVariables[0], processVariables[3]);
 
   //Sort the process by arrival time
   for(i=0; i<numberOfProcesses; i++){
@@ -243,102 +243,53 @@ void rr(FILE* out, int* processVariables, ProcessInfo* allProcesses){
   }
   bubbles(processOrder, numberOfProcesses);
 
-  //Select First Process
   for (i = 0 ; i < processCount; i++){
     if(allProcesses[i].pArrivalTime == processOrder[complete]){
       currentprocess = i;
       allProcesses[i].pWaitTime = 0;
+      allProcesses[i].pBurstRemaining = allProcesses[i].pBurst;
+      printf("first process : %s burst %d Arrival time %d", allProcesses[currentprocess].pName, allProcesses[currentprocess].pBurst, allProcesses[currentprocess].pArrivalTime);
       pCounter++;
     }
   }
 
-  fprintf(out, "Time %d: %s arrived\n", time, allProcesses[i].pName);
-  fprintf(out,"Time %d: %s selected (burst %d)\n", timer, allProcesses[currentprocess].pName, allProcesses[currentprocess].pBurst);
+  fprintf(out, "Time %d: %s arrived\n", time, allProcesses[currentprocess].pName);
+  fprintf(out,"Time %d: %s selected (burst %d)\n", time, allProcesses[currentprocess].pName, allProcesses[currentprocess].pBurst);
 
   while(time <= timeLimit){
-
-    if(idle && (pCounter <= numberOfProcesses)){
-      fprintf(out,"Time %d: %s selected (burst %d)\n", timer, allProcesses[currentprocess].pName, allProcesses[currentprocess].pBurst);
-      currentBurst = quantum;
-      idle = 0;
-    }else if(idle){
-      fprintf(out, "Timer %d: IDLE\n", time);
+    while(currentBurst < quantum){
+      currentBurst++;
+      time++;
+      allProcesses[currentprocess].pBurstRemaining--;
+      next = 1;
+    //  fprintf(out, "test\n");
+    //
+    //if(allProcesses[currentprocess].pArrivalTime == processOrder[complete])
+      //fprintf(out, "Time %d: %s arrived\n", time, allProcesses[currentprocess].pName);
     }
+    complete++;
 
-    time++;
-    if(!idle){
-      allProcesses[currentprocess].pBurst--;
-      currentBurst--;
+    //fprintf(out,"Time %d: %s selected (burst %d)\n", time, allProcesses[currentprocess].pName,allProcesses[currentprocess].pBurstRemaining);
 
-      if(currentBurst == 0){
-        fprintf(out, "Time %d: %sfinished\n", time, allProcesses[currentprocess].pName);
-        idle = 1;
-      }//else if(currentBurst)
-
-
-    }
-  }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-/*
-
-
-
-
-  for (time = 0; time < timeLimit; time++){
     printf("Time is %d\n", time);
 
-    for(i = 0; i<numberOfProcesses; i++){
-      if(allProcesses[i].pArrivalTime == time){
-        fprintf(out, "Time %d: %s arrived\n", time, allProcesses[i].pName);
-        currentBurst = allProcesses[i].pBurst;
-        if(currentBurst > quantum)
-          currentBurst = currentBurst - quantum;
+
+    if (next){
+    for (i = 0 ; i < processCount; i++){
+      if(allProcesses[i].pArrivalTime == processOrder[complete]){
+
+
+        currentprocess = i;
+        allProcesses[currentprocess].pWaitTime = time - allProcesses[currentprocess].pArrivalTime;
+
+        fprintf(out,"Time *%d: %s selected (burst %d)\n", time, allProcesses[currentprocess].pName,allProcesses[currentprocess].pBurstRemaining);
+        next = 0;
+        complete = 0;
       }
     }
-    // If there's no process currently running
-    if(currentprocess < 0){
-        fprintf(out, "Timer %d: IDLE\n", time);
-    }
   }
-  if(finishedCount == processCount){
-    fprintf(out, "Finished at time %d\n\n", timeLimit);
-    for(i = 0; i < processCount; i++){
-      fprintf(out, "%s wait %d turnaround \n", allProcesses[i].pName, allProcesses[i].pWaitTime);
-    }
-  }else{
-    fprintf(out, "Px did not finish");
+  time++;
   }
-  /*/
 	return;
 }
 
@@ -510,7 +461,6 @@ void firstComeFirstServe(FILE *out ,int* processVariables, ProcessInfo* allProce
 	// 	//otherwise increase timer
 	 	timer++;
 		allProcesses[currentprocess].pBurstRemaining--;
-
 
 
 	 }//ends while loop
