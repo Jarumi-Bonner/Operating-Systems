@@ -231,6 +231,7 @@ void rr(FILE* out, int* processVariables, ProcessInfo* allProcesses){
   bool isFinished[numberOfProcesses];
   int finishedCount =0;
   int processOrder[numberOfProcesses];
+  int visited = 0;
   int complete = 0;
   int idle = 1, next=0;
   int pCounter =0;
@@ -250,6 +251,7 @@ void rr(FILE* out, int* processVariables, ProcessInfo* allProcesses){
       allProcesses[i].pBurstRemaining = allProcesses[i].pBurst;
       printf("first process : %s burst %d Arrival time %d", allProcesses[currentprocess].pName, allProcesses[currentprocess].pBurst, allProcesses[currentprocess].pArrivalTime);
       pCounter++;
+      visited =1;
     }
   }
 
@@ -266,6 +268,8 @@ void rr(FILE* out, int* processVariables, ProcessInfo* allProcesses){
     //
     //if(allProcesses[currentprocess].pArrivalTime == processOrder[complete])
       //fprintf(out, "Time %d: %s arrived\n", time, allProcesses[currentprocess].pName);
+      if(currentBurst == quantum)
+        fprintf(out,"Time %d: %s selected (burst %d)\n", time, allProcesses[currentprocess].pName,allProcesses[currentprocess].pBurstRemaining);
     }
     complete++;
 
@@ -277,12 +281,15 @@ void rr(FILE* out, int* processVariables, ProcessInfo* allProcesses){
     if (next){
     for (i = 0 ; i < processCount; i++){
       if(allProcesses[i].pArrivalTime == processOrder[complete]){
-
+        time++;
+        if(allProcesses[i].pArrivalTime == processOrder[complete]  && visited)
+          fprintf(out, "Time %d: %s has arrived\n", time, allProcesses[i].pName);
+      visited = 0;
 
         currentprocess = i;
         allProcesses[currentprocess].pWaitTime = time - allProcesses[currentprocess].pArrivalTime;
 
-        fprintf(out,"Time *%d: %s selected (burst %d)\n", time, allProcesses[currentprocess].pName,allProcesses[currentprocess].pBurstRemaining);
+        //fprintf(out,"Time %d: %s selected (burst %d)\n", time, allProcesses[currentprocess].pName,allProcesses[currentprocess].pBurstRemaining);
         next = 0;
         complete = 0;
       }
