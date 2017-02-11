@@ -28,12 +28,13 @@ ProcessInfo* getProcessInfo(FILE *file, int numberOfProcesses);
 void shortestJobFirst(FILE* out, int* processVariables, ProcessInfo* allProcesses);
 void rr(FILE* out, int* processVariables, ProcessInfo* allProcesses);
 void firstComeFirstServe(FILE *out ,int* processVariables, ProcessInfo* allProcesses );
+void roundRobin(FILE *out, int* processVariables, ProcessInfo* allProcesses);
 void swap(int *a, int *b);
 void bubbles(int array[], int length);
 
 /* Gobal Variables*/
 
-int timer = 0,
+int timer =0,
 currentprocess = -1,
 processCount;
 
@@ -44,7 +45,7 @@ int main (void){
 	int i, x, y, z;
 
 	/* Open file for processing data */
-	file = fopen ("process.in", "r");
+	file = fopen ("set2_process.in", "r");
 
 	/* Open and close file for processing data */
 	//file = fopen ("set7_process.in", "r");
@@ -91,7 +92,8 @@ int main (void){
             break;
 
 		case 2: // Round Robin
-		        rr(out,processVariables, allProcesses);
+		        //rr(out,processVariables, allProcesses);
+		        roundRobin(out, processVariables, allProcesses);
             break;
 		// Call Function to Round-Robin
 
@@ -409,6 +411,159 @@ void shortestJobFirst(FILE* out, int* processVariables, ProcessInfo* allProcesse
 
 }
 
+void roundRobin(FILE *out, int* processVariables, ProcessInfo* allProcesses)
+{
+    int timeLimit = processVariables[1];
+    int quantum = processVariables[3];
+    int queue[processCount];
+    int time, i, finishCount =0, spotInTheQ =0;
+    int noOfPArrivedByNow = 0;
+    bool contextSwitch = false;
+
+    currentprocess = -1;
+
+    /* The way the queue array is implemented replicates the characteristics of an actual queue
+        The array index will indicate the process, and the array value will indicate it's spot in the queue
+        i.e. if queue[3] =1 that means the 3rd process is 2nd in line. if queue[4] =0, then 4th process is first in line
+    */
+    // initialize the queue at first
+    for(i = 0; i < processCount; i++)
+    {
+        queue[i] = -1;
+    }
+    // Write to output file
+    fprintf(out, "%d Processes\nUsing Round-Robin\nQuantum %d\n\n", processCount, quantum);
+
+    // Run up untiil the time limit
+    for(time = 0; time <= timeLimit; time++)
+    {
+        // For each process given
+        for(i = 0; i < processCount; i++)
+        {
+            // Check if a new process was arrived at the current time
+            if (time == allProcesses[i].pArrivalTime)
+            {
+                // write to output file
+                fprintf(out, "Time %d: %s arrived\n", time, allProcesses[i].pName);
+                // Add new process to the Q. "spotInTheQ" variable also keeps track of the # processes
+                // arrived by the current time
+                queue[i] =  spotInTheQ++;
+            }
+
+            // if there is a process running
+            if (currentprocess >= 0)
+            {
+                // increment wait time of the other processes not running
+                if (currentprocess != i && time > allProcesses[i].pArrivalTime && queue[i] >=0)
+                {
+                    /*
+                        BUG ALERT!!
+                        If we just had a context switch, the process that was just running's waitTime will be incremented
+                        without the time itself incrementing
+
+                    */
+                    allProcesses[i].pWaitTime++;
+                }
+
+                // check if the quantum is up
+                if (time % quantum == 0)
+                {
+                    // Move the line! As in All the other processes that aren't running get moved up a spot
+                    if (i != currentprocess && queue[i] > 0)
+                    {
+                        queue[i] = queue[i] -1;
+                    }
+                    // Move the current process to the back of the line
+                    else if (i == currentprocess)
+                    {
+                        allProcesses[currentprocess].pBurst--;
+                        // send the current process to the back of the queue
+                        // Substracting 1 because the queue is 0 indexed
+                        queue[currentprocess] = spotInTheQ -1;
+                        contextSwitch = true;
+                        // Make the current process give up the processor
+                        currentprocess = -1;
+                        // start the loop over again
+                        i =-1;
+                    }
+                }
+
+                else if (i == currentprocess)
+                {
+                    // decrement the burst of the running process
+                    allProcesses[currentprocess].pBurst--;
+                }
+
+                // if a process just finished
+                if (currentprocess >=0 && allProcesses[currentprocess].pBurst == 0 && queue[currentprocess] >= 0)
+                {
+                    // write to file
+                    fprintf(out, "Time %d: %s finished\n", time, allProcesses[currentprocess].pName);
+                    // Pretty much take it out of the line/ Queue
+                    queue[currentprocess] = -1;
+                    // calculate its turnaround time
+                    allProcesses[currentprocess].pTurnaroundTime = time - allProcesses[currentprocess].pArrivalTime;
+                    // increment the number of processes that are finished
+                    finishCount++;
+                    /*
+                        BUG ALERT!!
+                        Once a process is finished, you want the next process who's first in line to run
+                        at the current time.
+                    */
+                   // currentprocess = -1;
+                   // i =-1;
+
+                }
+
+            }
+
+            // if there aren't any processes running
+            else
+            {
+                // Check who's process turn it is from the queue
+                if(queue[i] == 0)
+                {
+                    // context switch
+                    currentprocess = i;
+                    contextSwitch = false;
+                    fprintf(out, "Time %d: %s selected (burst %d)\n", time, allProcesses[i].pName, allProcesses[i].pBurst);
+
+                }
+                // move the line
+                else if(queue[i] > 0)
+                {
+                    queue[i] = queue[i] -1;
+                }
+            }
+        }
+
+        if (currentprocess < 0 && time != timeLimit)
+        {
+            fprintf(out, "Time %d: IDLE\n", time);
+            printf("Time %d: IDLE\n", time);
+        }
+
+        if (contextSwitch == true)
+        {
+            currentprocess = -1;
+        }
+
+    }
+
+    if (finishCount == processCount)
+    {
+        fprintf(out, "Finished at time %d\n\n", timeLimit);
+        for(i = 0; i < processCount; i++)
+        {
+            fprintf(out, "%s wait %d turnaround %d\n", allProcesses[i].pName, allProcesses[i].pWaitTime, allProcesses[i].pTurnaroundTime);
+        }
+    }
+    else
+    {
+        fprintf(out, "Px did not finish\n");
+    }
+
+}
 
 void firstComeFirstServe(FILE *out ,int* processVariables, ProcessInfo* allProcesses){
 	int processOrder[processCount];
