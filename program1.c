@@ -8,6 +8,7 @@
 #include <string.h>
 #include <ctype.h>
 #include <stdbool.h>
+#include <limits.h>
 
 
 // Toggle this variable if you want to print all parsed data
@@ -55,7 +56,7 @@ int main (void){
 	int i, x, y, z;
 
 	/* Open file for processing data */
-	file = fopen ("set1_process.in", "r");
+	file = fopen ("set6_process.in", "r");
 	out = fopen("process.out", "w+");
 
 	//Contains all data related to the scheduler
@@ -210,31 +211,48 @@ void rr(FILE* out, int* processVariables/*, insert 2d array or struct*/){
 void shortestJobFirst(FILE* out, int* processVariables, ProcessInfo* allProcesses)
 {
     int timeLimit = processVariables[1];
-    int currentBurst = 999, nextProcessToRun = -1;
+    int currentBurst = INT_MAX, nextProcessToRun = -1;
     int finishedCount =0, time, i;
     processCount = processVariables[0];
     currentprocess = -1;
     bool isFinished[processCount];
 
+    // prepare output file
     fprintf(out, "%d processes \nUsing Shortest Job First (Pre) \n\n", processCount);
 
+    // run until the given time lit
     for (time = 0; time <= timeLimit; time++)
     {
-        printf("Time is %d\n", time);
-
         // If there's a process currently running
         if(currentprocess >= 0)
         {
             // decrease the burst
             allProcesses[currentprocess].pBurst--;
-            // Process just finished
+            // if the running process just finished
             if(allProcesses[currentprocess].pBurst == 0)
             {
-                fprintf(out, "Time %d: %s Finished\n", time, allProcesses[currentprocess].pName);
+                fprintf(out, "Time %d: %s finished\n", time, allProcesses[currentprocess].pName);
+                // get the turn around time for that process
+                allProcesses[currentprocess].pTurnaroundTime = time - allProcesses[currentprocess].pArrivalTime;
+                // set flag to true; signifies that this process is finished
                 isFinished[currentprocess] = true;
-                currentprocess = -1;
-                currentBurst = 999;
+                // reset the current burst
+                currentBurst = INT_MAX;
+                // increment the number of processes that are finished
                 finishedCount++;
+                // increase the wait time for all the other processes that weren't running
+                /*
+                  **I'm sure there's a better way to do this but i got tired of thinking
+                */
+                for (i = 0; i < processCount; i++)
+                {
+                    if (i != currentprocess && !isFinished[i] && time > allProcesses[i].pArrivalTime)
+                    {
+                        allProcesses[i].pWaitTime++;
+                    }
+                }
+                // No process currently running
+                currentprocess = -1;
             }
         }
 
@@ -243,13 +261,18 @@ void shortestJobFirst(FILE* out, int* processVariables, ProcessInfo* allProcesse
             // New process arrived
             if(allProcesses[i].pArrivalTime == time)
             {
+
                 fprintf(out, "Time %d: %s arrived\n", time, allProcesses[i].pName);
+                // if the new process's burst is less than the current burst,
+                // then give it priority
                 if(allProcesses[i].pBurst < currentBurst)
                 {
                     currentBurst = allProcesses[i].pBurst;
                     nextProcessToRun = i;
                 }
             }
+            // if there are no processes running or if a process just finished,
+            // then choose the next one to go
             if(currentprocess < 0)
             {
                 if(time > allProcesses[i].pArrivalTime && !isFinished[i])
@@ -261,40 +284,42 @@ void shortestJobFirst(FILE* out, int* processVariables, ProcessInfo* allProcesse
                     }
                 }
             }
-			/* Wrong logic for wait time *Reminder*
+
+            // if there's a current process running
 			else
 			{
-				if(currentprocess != i && time > allProcesses[i].pArrivalTime)
+			    // increment the wait time of all the other processes that aren't running
+				if(currentprocess != i && time > allProcesses[i].pArrivalTime && !isFinished[i])
 				{
-					allProcesses[i].pWaitTime++; 
+					allProcesses[i].pWaitTime++;
 				}
 			}
-			*/
+
         }
+        // New process selected
         if (nextProcessToRun >=0 && nextProcessToRun != currentprocess && !isFinished[nextProcessToRun])
         {
             currentprocess = nextProcessToRun;
             fprintf(out, "Time %d: %s selected (burst %d)\n", time, allProcesses[currentprocess].pName, allProcesses[currentprocess].pBurst);
         }
         // If there's no process currently running
-        if(currentprocess < 0)
+        if(currentprocess < 0 && time != timeLimit)
         {
-            fprintf(out, "Timer %d: IDLE\n", time);
+            fprintf(out, "Time %d: IDLE\n", time);
         }
     }
+    // check if we finished all the processes
     if(finishedCount == processCount)
     {
-
         fprintf(out, "Finished at time %d\n\n", timeLimit);
 		for(i = 0; i < processCount; i++)
 		{
-			fprintf(out, "%s wait %d turnaround \n", allProcesses[i].pName, allProcesses[i].pWaitTime);
+			fprintf(out, "%s wait %d turnaround %d\n", allProcesses[i].pName, allProcesses[i].pWaitTime, allProcesses[i].pTurnaroundTime);
 		}
-     
     }
     else
     {
-        fprintf(out, "Px did not finish");
+        fprintf(out, "Px did not finish\n");
     }
 
 }
@@ -313,7 +338,7 @@ void firstComeFirstServe(FILE *out ,int* processVariables, ProcessInfo* allProce
 	fprintf(out,"%d Processes\n", processCount);
 	fprintf(out,"Using First Come First Serve\n\n\n");
 
-	//Sort Processes by order of arrival 
+	//Sort Processes by order of arrival
 	for (i = 0 ; i < processCount; i++){
 		processOrder[i] = allProcesses[i].pArrivalTime;
 	}
@@ -323,7 +348,7 @@ void firstComeFirstServe(FILE *out ,int* processVariables, ProcessInfo* allProce
 			if (processOrder[i] > processOrder[j]){
 				swap =  processOrder[i];
 				processOrder[i] = processOrder[j];
-				processOrder[j] = swap;   
+				processOrder[j] = swap;
 			}
     	}
 	}
@@ -339,14 +364,14 @@ void firstComeFirstServe(FILE *out ,int* processVariables, ProcessInfo* allProce
 		fprintf(out,"Time %d: %s arrived\n", timer, allProcesses[currentprocess].pName );
 		fprintf(out,"Time %d: %s selected (burst %d)\n", timer, allProcesses[currentprocess].pName, allProcesses[currentprocess].pBurst);
 
-	//While loop to emulate the total runtime of the scheduler 
+	//While loop to emulate the total runtime of the scheduler
 	while(timer <= runTime){
 
-		//Check if new process has arrived 
+		//Check if new process has arrived
 		for (i = processCount-1; i >= 1 ; i--){
 			if(allProcesses[i].pArrivalTime == timer)
 				fprintf(out,"Time %d: %s arrived\n", timer, allProcesses[i].pName );
-				
+
 		}
 
 		//Current Process has finished
@@ -357,7 +382,7 @@ void firstComeFirstServe(FILE *out ,int* processVariables, ProcessInfo* allProce
 			complete++;
 		}
 
-		//if old process has finish find next process 
+		//if old process has finish find next process
 		if (next){
 			for (i = 0 ; i < processCount; i++){
 				if(allProcesses[i].pArrivalTime == processOrder[complete]){
@@ -370,11 +395,11 @@ void firstComeFirstServe(FILE *out ,int* processVariables, ProcessInfo* allProce
 		}
 
 
-	// 	//otherwise increase timer 
+	// 	//otherwise increase timer
 	 	timer++;
 		allProcesses[currentprocess].pBurstRemaining--;
-		
-		
+
+
 
 	 }//ends while loop
 
@@ -385,7 +410,7 @@ void firstComeFirstServe(FILE *out ,int* processVariables, ProcessInfo* allProce
 			fprintf(out,"%s wait %d turnaround %d\n", allProcesses[i].pName, allProcesses[i].pWaitTime, allProcesses[i].pTurnaroundTime);
 		}
 	}
-	else 
+	else
 		fprintf(out,"Fail! All processes could not be completed in the given time.");
 
 	return;
