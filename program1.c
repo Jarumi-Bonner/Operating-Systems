@@ -306,6 +306,7 @@ void firstComeFirstServe(FILE *out ,int* processVariables, ProcessInfo* allProce
 	int complete = 0;
 	int next = 0;
 	int swap = 0;
+	int idle = 0;
 	int runTime = processVariables[1];
 
 
@@ -355,21 +356,26 @@ void firstComeFirstServe(FILE *out ,int* processVariables, ProcessInfo* allProce
 			allProcesses[currentprocess].pTurnaroundTime = timer - allProcesses[currentprocess].pArrivalTime;
 			fprintf(out,"Time %d: %s finished \n", timer, allProcesses[currentprocess].pName );
 			complete++;
+			idle = 1;
 		}
 
 		//if old process has finish find next process 
 		if (next){
 			for (i = 0 ; i < processCount; i++){
-				if(allProcesses[i].pArrivalTime == processOrder[complete]){
+				if(allProcesses[i].pArrivalTime == processOrder[complete] && allProcesses[i].pArrivalTime <= timer){
 					currentprocess = i;
 					allProcesses[currentprocess].pWaitTime = timer - allProcesses[currentprocess].pArrivalTime;
 					fprintf(out,"Time %d: %s selected (burst %d)\n", timer, allProcesses[currentprocess].pName,allProcesses[currentprocess].pBurst );
 					next = 0;
+					idle = 0;
 				}
+				
 			}
 		}
 
-
+		if(idle){
+			fprintf(out,"Time %d: Idle \n", timer );
+		}
 	// 	//otherwise increase timer 
 	 	timer++;
 		allProcesses[currentprocess].pBurstRemaining--;
