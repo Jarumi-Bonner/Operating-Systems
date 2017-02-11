@@ -1,0 +1,10 @@
+processcount 5 # Read 5 processes
+runfor 30 # time limit
+use fcfs # which method to use
+#quantum 2 # Time 
+process name Peter arrival 3 burst 6
+process name Jessie arrival 5 burst 3
+process name Ian arrival 16 burst 3
+process name Ryan arrival 22 burst 1
+process name Luther arrival 8 burst 5
+end 
