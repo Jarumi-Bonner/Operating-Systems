@@ -31,8 +31,10 @@ typedef struct processInfo ProcessInfo;
 int* parseProcessInfo(FILE *file);
 ProcessInfo* getProcessInfo(FILE *file, int numberOfProcesses);
 void shortestJobFirst(FILE* out, int* processVariables, ProcessInfo* allProcesses);
-void rr(FILE *out, int* processVariables);
+void rr(FILE* out, int* processVariables, ProcessInfo* allProcesses);
 void firstComeFirstServe(FILE *out ,int* processVariables, ProcessInfo* allProcesses );
+void swap(int *a, int *b);
+void bubbles(int array[], int length);
 
 //Possible Struct for processes info and Queue
 
@@ -56,7 +58,8 @@ int main (void){
 	int i, x, y, z;
 
 	/* Open file for processing data */
-	file = fopen ("set6_process.in", "r");
+	file = fopen ("set4_process.in", "r");
+
 	out = fopen("process.out", "w+");
 
 	//Contains all data related to the scheduler
@@ -99,14 +102,14 @@ int main (void){
             break;
 
 		case 2: // Round Robin
-		// rr(out,processVariables);
+		        rr(out,processVariables, allProcesses);
+            break;
 		// Call Function to Round-Robin
 
 		break;
 
 	}
     fclose(out);
-    // Ayee! Free Kodak
     free(allProcesses);
 	return 0;
 
@@ -144,7 +147,7 @@ int* parseProcessInfo(FILE *file){
 
 	int* processVariables;
 	/* Process Variables array
-	// 0				1  				2				3
+	// 0			            	1  			     	2			       	3
 	// +-------------+  +-----------+	+-----------+	+---------------+
 	// | ProcessCount|  | runTime	|	| Method	|	|QuantumTime	|
 	// +-------------+  +-----------+	+-----------+	+---------------+
@@ -201,13 +204,146 @@ int* parseProcessInfo(FILE *file){
 }// End parseProcessInfo() function
 
 
-//Implentation of Round-Robin
-void rr(FILE* out, int* processVariables/*, insert 2d array or struct*/){
+// Swaps the integers pointed to by a and b.
+void swap(int *a, int *b) {
+     int temp = *a;
+     *a = *b;
+     *b = temp;
+}
 
-	fprintf(out, "%d proccess\n Using Round-Robin\n Quantum %d", processVariables[0], processVariables[3]);
+
+void bubbles(int array[], int length){
+int i, j;
+
+  for (i = length-1; i > 0; i--) {
+    for (j = 0; j < i; j++)
+      if (array[j] > array[j+1])
+          swap(&array[j], &array[j+1]);
+  }
+}
+
+//Implentation of Round-Robin
+void rr(FILE* out, int* processVariables, ProcessInfo* allProcesses){
+
+  int timeLimit = processVariables[1], time, i;
+  int numberOfProcesses = processVariables[0];
+  int quantum = processVariables[3];
+  int currentprocess=0, currentBurst= 0;
+  bool isFinished[numberOfProcesses];
+  int finishedCount =0;
+  int processOrder[numberOfProcesses];
+  int complete = 0;
+  int idle = 1;
+  int pCounter;
+
+	fprintf(out, "%d proccess\n Using Round-Robin\n Quantum %d\n\n", processVariables[0], processVariables[3]);
+
+  //Sort the process by arrival time
+  for(i=0; i<numberOfProcesses; i++){
+    processOrder[i] = allProcesses[i].pArrivalTime;
+  }
+  bubbles(processOrder, numberOfProcesses);
+
+  //Select First Process
+  for (i = 0 ; i < processCount; i++){
+    if(allProcesses[i].pArrivalTime == processOrder[complete]){
+      currentprocess = i;
+      allProcesses[i].pWaitTime = 0;
+      pCounter++;
+    }
+  }
+
+  fprintf(out, "Time %d: %s arrived\n", time, allProcesses[i].pName);
+  fprintf(out,"Time %d: %s selected (burst %d)\n", timer, allProcesses[currentprocess].pName, allProcesses[currentprocess].pBurst);
+
+  while(time <= timeLimit){
+
+    if(idle && (pCounter <= numberOfProcesses)){
+      fprintf(out,"Time %d: %s selected (burst %d)\n", timer, allProcesses[currentprocess].pName, allProcesses[currentprocess].pBurst);
+      currentBurst = quantum;
+      idle = 0;
+    }else if(idle){
+      fprintf(out, "Timer %d: IDLE\n", time);
+    }
+
+    time++;
+    if(!idle){
+      allProcesses[currentprocess].pBurst--;
+      currentBurst--;
+
+      if(currentBurst == 0){
+        fprintf(out, "Time %d: %sfinished\n", time, allProcesses[currentprocess].pName);
+        idle = 1;
+      }//else if(currentBurst)
+
+
+    }
+  }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/*
+
+
+
+
+  for (time = 0; time < timeLimit; time++){
+    printf("Time is %d\n", time);
+
+    for(i = 0; i<numberOfProcesses; i++){
+      if(allProcesses[i].pArrivalTime == time){
+        fprintf(out, "Time %d: %s arrived\n", time, allProcesses[i].pName);
+        currentBurst = allProcesses[i].pBurst;
+        if(currentBurst > quantum)
+          currentBurst = currentBurst - quantum;
+      }
+    }
+    // If there's no process currently running
+    if(currentprocess < 0){
+        fprintf(out, "Timer %d: IDLE\n", time);
+    }
+  }
+  if(finishedCount == processCount){
+    fprintf(out, "Finished at time %d\n\n", timeLimit);
+    for(i = 0; i < processCount; i++){
+      fprintf(out, "%s wait %d turnaround \n", allProcesses[i].pName, allProcesses[i].pWaitTime);
+    }
+  }else{
+    fprintf(out, "Px did not finish");
+  }
+  /*/
 	return;
 }
 
+/*Begin Shortest Job First Algorithm */
 void shortestJobFirst(FILE* out, int* processVariables, ProcessInfo* allProcesses)
 {
     int timeLimit = processVariables[1];
@@ -323,6 +459,7 @@ void shortestJobFirst(FILE* out, int* processVariables, ProcessInfo* allProcesse
     }
 
 }
+
 
 void firstComeFirstServe(FILE *out ,int* processVariables, ProcessInfo* allProcesses){
 	int processOrder[processCount];
